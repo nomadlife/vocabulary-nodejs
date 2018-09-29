@@ -1,0 +1,32 @@
+{
+  "topics": [],
+  "books": [
+    {
+      "id": "A3e0kIMTu",
+      "title": "book1",
+      "author": "author1"
+    },
+    {
+      "id": "tk0ZnsXXZ",
+      "title": "book2",
+      "author": "author22"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "W9Yt94JAf",
+      "title": "chapter01",
+      "book_id": "tk0ZnsXXZ"
+    },
+    {
+      "id": "f2PZMvYL9",
+      "title": "chapter02",
+      "book_id": "tk0ZnsXXZ"
+    },
+    {
+      "id": "x1w3sNFxe",
+      "title": "chapter00",
+      "book_id": "A3e0kIMTu"
+    }
+  ]
+}
