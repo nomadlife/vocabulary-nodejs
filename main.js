@@ -33,9 +33,22 @@ var template = {
       </body>
       </html>
       `;
+    },wordlist:function(filelist){
+      var list = `<br><table border='1' style="border: 1px solid black;border-collapse:collapse;">
+      <tr><th>words</th><th>meaning</th></tr>`;
+      var i = 0;
+      while((filelist) && i < filelist.length){
+        list = list + `<tr>
+        <td><a href="/word/${filelist[i].id}">${filelist[i].title}</a></td>
+        <td>${filelist[i].meaning}</td>
+        </tr>`;
+        i = i + 1;
+      }
+      list = list+'</table>'; 
+      return list;
     },chapterlist:function(filelist){
       var list = `<br><table border='1' style="border: 1px solid black;border-collapse:collapse;">
-      <tr><th>chspter</th></tr>`;
+      `;
       var i = 0;
       while((filelist) && i < filelist.length){
         list = list + `<tr>
@@ -48,7 +61,7 @@ var template = {
     },
     booklist:function(filelist){
       var list = `<br><table border='1' style="border: 1px solid black;border-collapse:collapse;">
-      <tr><th>book</th><th>author</th></tr>`;
+      <tr><th>title</th><th>author</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
         list = list + `<tr>
@@ -217,9 +230,9 @@ app.get('/', function (request, response) {
     var title = 'WEB - create';
     var list = '';
     var html = template.HTML(title, list, `
+    <br><b>${book.title}</b> by ${book.author}
         <form action="/chapter/create_process" method="post">
           <input type="hidden" name="book_id" value="${book.id}">
-          <p><input type="text" name="book_title" value="${book.title}" readonly></p>
           <p><input type="text" name="chapter" placeholder="chapter"></p>
           <p><input type="submit" value="create chapter"></p>
         </form>
@@ -247,11 +260,14 @@ app.get('/', function (request, response) {
     var word = db.get('words').filter({
       chapter_id: chapter.id
     }).value();
+    var book = db.get('books').find({
+      id: chapter.book_id
+    }).value();
     var title = '';
     var description = '';
-    var list = '';
+    var list = template.wordlist(word);
     var html = template.HTML(title, '',
-      `<br><b>${chapter.title}</b>
+      `<br><a href="/book/${book.id}">${book.title}</a> > <b>${chapter.title}</b>
       ${list}`,
       control.chapterUI(request, response, chapter.id),
       '' 
@@ -261,12 +277,13 @@ app.get('/', function (request, response) {
 
   app.get('/word/create/:chapterId', function (request, response) {
     var chapter = db.get('chapters').find({id:request.params.chapterId}).value();
+    var book = db.get('books').find({id:chapter.book_id}).value();
     var title = 'WEB - create';
     var list = '';
     var html = template.HTML(title, list, `
+    <br><a href="/book/${book.id}">${book.title}</a> > <b>${chapter.title}</b>
         <form action="/word/create_process" method="post">
           <input type="hidden" name="chapter_id" value="${chapter.id}">
-          <p><input type="text" name="chapter_title" value="${chapter.title}" readonly></p>
           <p><input type="text" name="word" placeholder="word"></p>
           <p><textarea name="meaning" placeholder="meaning"></textarea></p>
           <p><input type="submit" value="create word"></p>
@@ -281,9 +298,9 @@ app.get('/', function (request, response) {
     var word = post.word;
     var meaning = post.meaning;
     var id = shortid.generate();
-    db.get('chapters').push({
+    db.get('words').push({
       id: id,
-      word: word,
+      title: word,
       meaning:meaning,
       chapter_id: chapter_id,
     }).write();
