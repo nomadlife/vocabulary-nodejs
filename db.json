@@ -9,7 +9,7 @@
     {
       "id": "tk0ZnsXXZ",
       "title": "book2",
-      "author": "author22"
+      "author": "author222"
     }
   ],
   "chapters": [
@@ -34,6 +34,12 @@
       "id": "ss7pUYfs4",
       "title": "word1",
       "meaning": "meaning1",
+      "chapter_id": "f2PZMvYL9"
+    },
+    {
+      "id": "ftyKA_SHF",
+      "title": "word2",
+      "meaning": "meaning2222",
       "chapter_id": "f2PZMvYL9"
     }
   ]

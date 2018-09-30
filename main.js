@@ -3,15 +3,28 @@ var app = express()
 var bodyParser = require('body-parser');
 var compression = require('compression');
 var sanitizeHtml = require('sanitize-html');
+ 
+var multer  = require('multer')
+// var upload = multer({dest:'uploads/'})
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname)
+  }
+})
+var upload = multer({ storage: storage })
+
 
 var low = require('lowdb');
 var FileSync = require('./node_modules/lowdb/adapters/FileSync');
 var adapter = new FileSync('db.json');
 var db = low(adapter);
 db.defaults({
-    books: [],
-    chapters: [],
-    words:[]
+  books: [],
+  chapters: [],
+  words:[]
 }).write();
 
 var template = {
@@ -47,8 +60,8 @@ var template = {
       list = list+'</table>'; 
       return list;
     },chapterlist:function(filelist){
-      var list = `<br><table border='1' style="border: 1px solid black;border-collapse:collapse;">
-      `;
+      var list = `<br> <table border='1' style="border: 1px solid black;border-collapse:collapse;">
+      <tr><th>chapters</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
         list = list + `<tr>
@@ -93,33 +106,30 @@ var control = {
       <form action="/chapter/delete_process" method="post" style="display: inline-block;">
         <input type="hidden" name="id" value="${chapter_id}">
         <input type="submit" value="delete">
+      </form>
+      <br> 
+      <form action="/word/import" method="POST" enctype="multipart/form-data" style="display: inline-block;">
+      <input type="file" name="myfile" accept="text/*" onchange="this.form.submit()">
+      <input type="hidden" name="chapter_id" value="${chapter_id}">
       </form>`;
-  },
-    topicUI:function(request, response, topic){
-      var authTopicUI =  `<br> <a href="/topic/create">new topic</a>
-          <a href="/topic/update/${topic.id}">update</a>
-          <form action="/topic/delete_process" method="post" style="display: inline-block;">
-            <input type="hidden" name="id" value="${topic.id}">
-            <input type="submit" value="delete">
-          </form>`;
-      return authTopicUI;
-    }
+  }
 }   
 var shortid = require('shortid');
 
 var helmet = require('helmet');
-var bcrypt = require('bcryptjs');
 app.use(helmet())
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({extended:false}))
 app.use(compression());
+app.use('/static',express.static('uploads'));
 
- 
+
 // app.get('*',function(request, response, next){
-//   // request.id = '';
-//   console.log('*',request.id);
-//     next()
-// })
+  //   // request.id = '';
+  //   console.log('*',request.id);
+  //     next()
+  // })
+  
 
 app.get('/', function (request, response) {
     var html = template.HTML('', '',
@@ -210,11 +220,8 @@ app.get('/', function (request, response) {
     var id = post.id;
     var title = post.title;
     var author = post.author;
-    var book = db.get('books').find({id:id}).value();
-    db.get('books').find({id:id}).assign({
-      title:title, author:author
-    }).write();
-    response.redirect(`/book/${book.id}`)
+    db.get('books').find({id:id}).assign({title:title, author:author}).write();
+    response.redirect(`/book/${id}`)
   })
 
   app.post('/book/delete_process', function (request, response) {
@@ -254,18 +261,13 @@ app.get('/', function (request, response) {
   })
 
   app.get('/chapter/:chapterId', function (request, response) {
-    var chapter = db.get('chapters').find({
-      id: request.params.chapterId
-    }).value();
-    var word = db.get('words').filter({
-      chapter_id: chapter.id
-    }).value();
-    var book = db.get('books').find({
-      id: chapter.book_id
-    }).value();
+    var chapter = db.get('chapters').find({id: request.params.chapterId}).value();
+    var word = db.get('words').filter({chapter_id: chapter.id}).value();
+    var book = db.get('books').find({id: chapter.book_id}).value();
     var title = '';
     var description = '';
     var list = template.wordlist(word);
+    //var sanitizedTitle = sanitizeHtml(topic.title);
     var html = template.HTML(title, '',
       `<br><a href="/book/${book.id}">${book.title}</a> > <b>${chapter.title}</b>
       ${list}`,
@@ -275,6 +277,32 @@ app.get('/', function (request, response) {
     response.send(html)
   })
 
+  app.get('/chapter/update/:chapterId', function (request, response) {
+    var chapter = db.get('chapters').find({id:request.params.chapterId}).value();
+    var book = db.get('books').find({id: chapter.book_id}).value();
+    var title = '';
+    var list = '';
+    var html = template.HTML(title, list,
+      `<br><a href="/book/${book.id}">${book.title}</a> > <b>${chapter.title}</b>
+      <form action="/chapter/update_process" method="post">
+        <input type="hidden" name="id" value="${chapter.id}">
+        <p><input type="text" name="title" placeholder="chapter title" value="${chapter.title}"></p>
+        <p><input type="submit" value="update"></p>
+      </form>
+      `,'',''
+    );
+    response.send(html);
+  })
+ 
+  app.post('/chapter/update_process', function (request, response) {
+    var post = request.body;
+    var id = post.id;
+    var title = post.title;
+    db.get('chapters').find({id:id}).assign({title:title}).write();
+    response.redirect(`/chapter/${id}`)
+  })
+
+ 
   app.get('/word/create/:chapterId', function (request, response) {
     var chapter = db.get('chapters').find({id:request.params.chapterId}).value();
     var book = db.get('books').find({id:chapter.book_id}).value();
@@ -305,6 +333,23 @@ app.get('/', function (request, response) {
       chapter_id: chapter_id,
     }).write();
     response.redirect(`/chapter/${chapter_id}`);
+  })
+
+  app.use('/word/show', express.static('uploads'));
+
+
+  app.post('/word/import', upload.single('myfile'), function (request, response) {
+    //var post = request.body; 
+    // var chapter_id = post.chapter_id
+    //var selectedFile = post.files[0];
+    console.log('file:',request.file.buffer);
+    
+    //console.log(post.files.myfile);
+    console.log('body:',request.body);
+
+    //var id = shortid.generate();
+
+    response.redirect(`/`);
   })
 
 
