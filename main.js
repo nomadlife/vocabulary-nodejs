@@ -10,7 +10,8 @@ var adapter = new FileSync('db.json');
 var db = low(adapter);
 db.defaults({
     books: [],
-    chapters: []
+    chapters: [],
+    words:[]
 }).write();
 
 var template = {
@@ -32,13 +33,13 @@ var template = {
       </body>
       </html>
       `;
-    },list:function(filelist){
+    },chapterlist:function(filelist){
       var list = `<br><table border='1' style="border: 1px solid black;border-collapse:collapse;">
-      `;
+      <tr><th>chspter</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
         list = list + `<tr>
-        <td><a href="/book/${filelist[i].id}">${filelist[i].title}</a></td>
+        <td><a href="/chapter/${filelist[i].id}">${filelist[i].title}</a></td>
         </tr>`;
         i = i + 1;
       }
@@ -72,6 +73,14 @@ var control = {
       </form>`;
     }
     return authTopicUI;
+  },
+  chapterUI:function(request, response,chapter_id){
+    return `<br> <a href="/word/create/${chapter_id}">new word</a> 
+      <a href="/chapter/update/${chapter_id}">update</a>
+      <form action="/chapter/delete_process" method="post" style="display: inline-block;">
+        <input type="hidden" name="id" value="${chapter_id}">
+        <input type="submit" value="delete">
+      </form>`;
   },
     topicUI:function(request, response, topic){
       var authTopicUI =  `<br> <a href="/topic/create">new topic</a>
@@ -113,7 +122,7 @@ app.get('/', function (request, response) {
     var books = db.get('books').value();
     var title = '';
     var description = 'book list';
-    var list = template.list(books);
+    var list = template.booklist(books);
     var html = template.HTML(title, list,
       `<h2>${title}</h2>${description}`,
       control.bookUI(request, response),
@@ -157,7 +166,7 @@ app.get('/', function (request, response) {
     }).value();
     var title = '';
     var description = '';
-    var list = template.list(chapters);
+    var list = template.chapterlist(chapters);
     var html = template.HTML(title, '',
       `<br><b>${book.title}</b> by ${book.author}
       ${list}`,
@@ -231,6 +240,55 @@ app.get('/', function (request, response) {
     response.redirect(`/book/${book_id}`);
   })
 
+  app.get('/chapter/:chapterId', function (request, response) {
+    var chapter = db.get('chapters').find({
+      id: request.params.chapterId
+    }).value();
+    var word = db.get('words').filter({
+      chapter_id: chapter.id
+    }).value();
+    var title = '';
+    var description = '';
+    var list = '';
+    var html = template.HTML(title, '',
+      `<br><b>${chapter.title}</b>
+      ${list}`,
+      control.chapterUI(request, response, chapter.id),
+      '' 
+    );
+    response.send(html)
+  })
+
+  app.get('/word/create/:chapterId', function (request, response) {
+    var chapter = db.get('chapters').find({id:request.params.chapterId}).value();
+    var title = 'WEB - create';
+    var list = '';
+    var html = template.HTML(title, list, `
+        <form action="/word/create_process" method="post">
+          <input type="hidden" name="chapter_id" value="${chapter.id}">
+          <p><input type="text" name="chapter_title" value="${chapter.title}" readonly></p>
+          <p><input type="text" name="word" placeholder="word"></p>
+          <p><textarea name="meaning" placeholder="meaning"></textarea></p>
+          <p><input type="submit" value="create word"></p>
+        </form>
+      `, '', '');
+    response.send(html);
+  })
+
+  app.post('/word/create_process', function (request, response) {
+    var post = request.body;
+    var chapter_id = post.chapter_id;
+    var word = post.word;
+    var meaning = post.meaning;
+    var id = shortid.generate();
+    db.get('chapters').push({
+      id: id,
+      word: word,
+      meaning:meaning,
+      chapter_id: chapter_id,
+    }).write();
+    response.redirect(`/chapter/${chapter_id}`);
+  })
 
 
 
