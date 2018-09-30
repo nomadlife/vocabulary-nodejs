@@ -94,8 +94,8 @@ var control = {
   bookUI:function(request, response,book_id){
     var authTopicUI =  '<br> <a href="/book/create">new book</a>'
     if(book_id){
-      authTopicUI = `<br> <a href="/chapter/create/${book_id}">new chapter</a> 
-      <a href="/book/update/${book_id}">update</a>
+      authTopicUI = `<br> <a href="/chapter/create/${book_id}">+chapter</a> 
+      <a href="/book/update/${book_id}">edit</a>
       <form action="/book/delete_process" method="post" style="display: inline-block;">
         <input type="hidden" name="id" value="${book_id}">
         <input type="submit" value="delete">
@@ -104,8 +104,8 @@ var control = {
     return authTopicUI;
   },
   chapterUI:function(request, response,chapter){
-    return `<br> <a href="/word/create/${chapter.id}">new word</a> 
-      <a href="/chapter/update/${chapter.id}">update</a>
+    return `<br> <a href="/word/create/${chapter.id}">+word</a> 
+      <a href="/chapter/update/${chapter.id}">rename</a>
       <form action="/chapter/delete_process" method="post" style="display: inline-block;">
         <input type="hidden" name="id" value="${chapter.id}">
         <input type="hidden" name="book_id" value="${chapter.book_id}">
@@ -119,7 +119,7 @@ var control = {
   },
   wordUI:function(request, response, word){
     return `<br> 
-      <a href="/word/update/${word.id}">update</a>
+      <a href="/word/update/${word.id}">edit</a>
       <form action="/word/delete_process" method="post" style="display: inline-block;">
         <input type="hidden" name="id" value="${word.id}">
         <input type="hidden" name="chapter_id" value="${word.chapter_id}">
@@ -159,7 +159,7 @@ app.get('/', function (request, response) {
   app.get('/book/list', function (request, response) {
     var books = db.get('books').value();
     var title = '';
-    var description = 'book list';
+    var description = '';
     var list = template.booklist(books);
     var html = template.HTML(title, list,
       `<h2>${title}</h2>${description}`,
@@ -426,6 +426,7 @@ app.get('/', function (request, response) {
       <br>
       <form action="/word/update_process" method="post">
           <input type="hidden" name="id" value="${word.id}">
+          <input type="hidden" name="chapter_id" value="${word.chapter_id}">
           <p><input type="text" name="title" placeholder="word" value="${word.title}"></p>
           <p><textarea name="meaning" placeholder="meaning">${word.meaning}</textarea></p>
           <p><input type="submit" value="update"></p>
@@ -438,19 +439,18 @@ app.get('/', function (request, response) {
   app.post('/word/update_process', function (request, response) {
     var post = request.body;
     var id = post.id;
+    var chapter_id = post.chapter_id
     var title = post.title;
     var meaning = post.meaning;
     db.get('words').find({id:id}).assign({title:title,meaning:meaning}).write();
-    response.redirect(`/word/${id}`)
+    response.redirect(`/chapter/${chapter_id}`)
   })
 
   app.post('/word/delete_process', function (request, response) {
     var post = request.body;
     var id = post.id;
     var chapter_id = post.chapter_id
-    console.log('id:',id);
-    console.log('chapter_id:',chapter_id);
-    //db.get('words').remove({id:id}).write();
+    db.get('words').remove({id:id}).write();
     response.redirect(`/chapter/${post.chapter_id}`);
 })
 

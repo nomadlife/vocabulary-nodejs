@@ -31,18 +31,6 @@
   ],
   "words": [
     {
-      "id": "ss7pUYfs4",
-      "title": "word1",
-      "meaning": "meaning1",
-      "chapter_id": "f2PZMvYL9"
-    },
-    {
-      "id": "ftyKA_SHF",
-      "title": "word2",
-      "meaning": "meaning2222",
-      "chapter_id": "f2PZMvYL9"
-    },
-    {
       "id": "ypJ7yo-Wj",
       "meaning": "test",
       "chapter_id": "f2PZMvYL9",
@@ -57,7 +45,7 @@
     {
       "id": "mkRO1SXqOF",
       "title": "reciprocity",
-      "meaning": "",
+      "meaning": "update meaning test 2",
       "chapter_id": "f2PZMvYL9"
     }
   ]
