@@ -3,19 +3,22 @@ var app = express()
 var bodyParser = require('body-parser');
 var compression = require('compression');
 var sanitizeHtml = require('sanitize-html');
+var fs = require('fs');
  
 var multer  = require('multer')
 // var upload = multer({dest:'uploads/'})
-var storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'uploads/')
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname)
-  }
-})
+ 
+// var storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, 'uploads/')
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, file.originalname)
+//   }
+// })
+// var upload = multer({ storage: storage })
+var storage = multer.memoryStorage()
 var upload = multer({ storage: storage })
-
 
 var low = require('lowdb');
 var FileSync = require('./node_modules/lowdb/adapters/FileSync');
@@ -335,21 +338,31 @@ app.get('/', function (request, response) {
     response.redirect(`/chapter/${chapter_id}`);
   })
 
-  app.use('/word/show', express.static('uploads'));
+  // app.get('/static', function(req,res){
+  //   fs.readFile('wordlist.txt', (e, data) => {
+  //     if (e) throw e;
+  //     console.log(data);
+  // });
+  // });
 
 
   app.post('/word/import', upload.single('myfile'), function (request, response) {
-    //var post = request.body; 
-    // var chapter_id = post.chapter_id
-    //var selectedFile = post.files[0];
-    console.log('file:',request.file.buffer);
-    
-    //console.log(post.files.myfile);
-    console.log('body:',request.body);
-
-    //var id = shortid.generate();
-
-    response.redirect(`/`);
+    var post = request.body; 
+    var chapter_id = post.chapter_id
+    var data=request.file.buffer.toString('utf8').trim().split('\r\n')
+    //console.log('data',data);
+    var i = 0;
+    while((data.length) && i < data.length){
+      var id = shortid.generate();
+      db.get('words').push({
+        id: id,
+        title: data[i],
+        meaning:'',
+        chapter_id: chapter_id,
+      }).write();
+      i=i+1
+    }
+    response.redirect(`/chapter/${chapter_id}`);
   })
 
 
