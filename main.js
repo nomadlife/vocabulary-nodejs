@@ -378,9 +378,11 @@ app.get('/', function (request, response) {
     var html = template.HTML(title, '',
       `<br><a href="/book/${book.id}">${book.title}</a> > 
       <a href="/chapter/${chapter.id}">${chapter.title}</a> >
-      ${word.title}
-      <br><br>
-      ${word.title} : ${word.meaning} <br>`,
+      <a href="/word/${word.id}">${word.title}</a>
+      <br>
+      <br>
+      ${word.title} : ${word.meaning}
+      <br>`,
       control.wordUI(request, response, word),
       '' 
     );
@@ -398,7 +400,7 @@ app.get('/', function (request, response) {
     var html = template.HTML(title, list,
       `<br><a href="/book/${book.id}">${book.title}</a> > 
       <a href="/chapter/${chapter.id}">${chapter.title}</a> >
-      ${word.title}
+      <a href="/word/${word.id}">${word.title}</a>
       <br>
       <form action="/word/update_process" method="post">
           <input type="hidden" name="id" value="${word.id}">
