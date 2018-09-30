@@ -6,17 +6,6 @@ var sanitizeHtml = require('sanitize-html');
 var fs = require('fs');
  
 var multer  = require('multer')
-// var upload = multer({dest:'uploads/'})
- 
-// var storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, 'uploads/')
-//   },
-//   filename: function (req, file, cb) {
-//     cb(null, file.originalname)
-//   }
-// })
-// var upload = multer({ storage: storage })
 var storage = multer.memoryStorage()
 var upload = multer({ storage: storage })
 
@@ -136,14 +125,6 @@ app.use(helmet())
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({extended:false}))
 app.use(compression());
-app.use('/static',express.static('uploads'));
-
-
-// app.get('*',function(request, response, next){
-  //   // request.id = '';
-  //   console.log('*',request.id);
-  //     next()
-  // })
   
 
 app.get('/', function (request, response) {
@@ -171,8 +152,10 @@ app.get('/', function (request, response) {
 
   app.get('/book/create', function (request, response) {
     var title = 'WEB - create';
-    var list = '';
-    var html = template.HTML(title, list, `
+    var books = db.get('books').value();
+    var list = template.booklist(books);
+    var html = template.HTML(title, '', 
+      `${list}
         <form action="/book/create_process" method="post">
           <p><input type="text" name="title" placeholder="title"></p>
           <p><input type="text" name="author" placeholder="author"></p>
@@ -196,17 +179,13 @@ app.get('/', function (request, response) {
   })
 
   app.get('/book/:bookId', function (request, response) {
-    var book = db.get('books').find({
-      id: request.params.bookId
-    }).value();
-    var chapters = db.get('chapters').filter({
-      book_id: book.id
-    }).value();
+    var book = db.get('books').find({id: request.params.bookId}).value();
+    var chapters = db.get('chapters').filter({book_id: book.id}).value();
     var title = '';
     var description = '';
     var list = template.chapterlist(chapters);
     var html = template.HTML(title, '',
-      `<br>${book.title} by ${book.author}
+      `<br><a href="/book/${book.id}">${book.title}</a> by ${book.author}
       ${list}`,
       control.bookUI(request, response, book.id),
       '' 
@@ -219,7 +198,8 @@ app.get('/', function (request, response) {
     var title = '';
     var list = '';
     var html = template.HTML(title, list,
-      `<form action="/book/update_process" method="post">
+      `<br><a href="/book/${book.id}">${book.title}</a>
+      <form action="/book/update_process" method="post">
         <input type="hidden" name="id" value="${book.id}">
         <p><input type="text" name="title" placeholder="title" value="${book.title}"></p>
         <p><input type="text" name="author" placeholder="author" value="${book.author}"></p>
@@ -240,19 +220,23 @@ app.get('/', function (request, response) {
   })
 
   app.post('/book/delete_process', function (request, response) {
+    // hold !!!
+    console.log('need to check if there are chapters and word included');
     var post = request.body;
     var id = post.id;
-    db.get('books').remove({id:id}).write();
-    response.redirect('/book/list');
+    //db.get('books').remove({id:id}).write();
+    response.redirect(`/book/${id}`);
   })
 
 
   app.get('/chapter/create/:bookId', function (request, response) {
     var book = db.get('books').find({id:request.params.bookId}).value();
+    var chapters = db.get('chapters').filter({book_id: book.id}).value();
     var title = 'WEB - create';
-    var list = '';
-    var html = template.HTML(title, list, `
-    <br><b>${book.title}</b> by ${book.author}
+    var list = template.chapterlist(chapters);
+    var html = template.HTML(title, '', `
+    <br><a href="/book/${book.id}">${book.title}</a> by ${book.author}
+    ${list}
         <form action="/chapter/create_process" method="post">
           <input type="hidden" name="book_id" value="${book.id}">
           <p><input type="text" name="chapter" placeholder="chapter"></p>
@@ -285,7 +269,7 @@ app.get('/', function (request, response) {
     //var sanitizedTitle = sanitizeHtml(topic.title);
     var html = template.HTML(title, '',
       `<br><a href="/book/${book.id}">${book.title}</a> > 
-      ${chapter.title}
+      <a href="/chapter/${chapter.id}">${chapter.title}</a>
       ${list}`,
       control.chapterUI(request, response, chapter),
       '' 
@@ -299,7 +283,8 @@ app.get('/', function (request, response) {
     var title = '';
     var list = '';
     var html = template.HTML(title, list,
-      `<br><a href="/book/${book.id}">${book.title}</a> > <b>${chapter.title}</b>
+      `<br><a href="/book/${book.id}">${book.title}</a> > 
+      <a href="/chapter/${chapter.id}">${chapter.title}</a>
       <form action="/chapter/update_process" method="post">
         <input type="hidden" name="id" value="${chapter.id}">
         <p><input type="text" name="title" placeholder="chapter title" value="${chapter.title}"></p>
@@ -320,25 +305,25 @@ app.get('/', function (request, response) {
 
   app.post('/chapter/delete_process', function (request, response) {
     // hold !!!!11
-    console.log(' !!!!!! need update, check existing word list');
+    console.log('!!!!!! need to check if there existing word');
     var post = request.body;
     var id = post.id;
     var book_id = post.book_id
-    console.log('id:',id);
-    console.log('book_id:',book_id);
     //db.get('chapters').remove({id:id}).write();
-    response.redirect(`/book/${post.book_id}`);
+    response.redirect(`/chapter/${id}`);
   })
-
 
  
   app.get('/word/create/:chapterId', function (request, response) {
     var chapter = db.get('chapters').find({id:request.params.chapterId}).value();
+    var word = db.get('words').filter({chapter_id: chapter.id}).value();
     var book = db.get('books').find({id:chapter.book_id}).value();
     var title = 'WEB - create';
-    var list = '';
-    var html = template.HTML(title, list, `
-    <br><a href="/book/${book.id}">${book.title}</a> > <b>${chapter.title}</b>
+    var list = template.wordlist(word);
+    var html = template.HTML(title, '', 
+    `<br><a href="/book/${book.id}">${book.title}</a> > 
+    <a href="/chapter/${chapter.id}">${chapter.title}</a>
+    ${list}
         <form action="/word/create_process" method="post">
           <input type="hidden" name="chapter_id" value="${chapter.id}">
           <p><input type="text" name="word" placeholder="word"></p>
@@ -364,19 +349,10 @@ app.get('/', function (request, response) {
     response.redirect(`/chapter/${chapter_id}`);
   })
 
-  // app.get('/static', function(req,res){
-  //   fs.readFile('wordlist.txt', (e, data) => {
-  //     if (e) throw e;
-  //     console.log(data);
-  // });
-  // });
-
-
   app.post('/word/import', upload.single('myfile'), function (request, response) {
     var post = request.body; 
     var chapter_id = post.chapter_id
-    var data=request.file.buffer.toString('utf8').trim().split('\r\n')
-    //console.log('data',data);
+    var data = request.file.buffer.toString('utf8').trim().split('\r\n')
     var i = 0;
     while((data.length) && i < data.length){
       var id = shortid.generate();
@@ -386,7 +362,7 @@ app.get('/', function (request, response) {
         meaning:'',
         chapter_id: chapter_id,
       }).write();
-      i=i+1
+      i = i + 1
     }
     response.redirect(`/chapter/${chapter_id}`);
   })
@@ -454,109 +430,6 @@ app.get('/', function (request, response) {
     response.redirect(`/chapter/${post.chapter_id}`);
 })
 
-
-  app.get('/topic/list', function (request, response) {
-    var title = '';
-    var description = '';
-    var list = template.list(request.list);
-    var html = template.HTML(title, list,
-      `<h2>${title}</h2>${description}`,
-      auth.topicUI(request, response, request.list),
-      ''
-    );
-    response.send(html)
-  })
-
-  app.get('/topic/create', function (request, response) {
-    var title = 'WEB - create';
-    var list = template.list(request.list);
-    var html = template.HTML(title, list, `
-        <form action="/topic/create_process" method="post">
-          <p><input type="text" name="title" placeholder="title"></p>
-          <p><textarea name="description" placeholder="description"></textarea></p>
-          <p><input type="submit" value="create"></p>
-        </form>
-      `, '', ''
-      );
-    response.send(html);
-  })
-  
-  app.post('/topic/create_process', function (request, response) {
-    var post = request.body;
-    var title = post.title;
-    var description = post.description;
-  
-    var id = shortid.generate();
-    db.get('topics').push({
-      id: id,
-      title: title,
-      description: description,
-      user_id: request.user.id
-    }).write();
-    response.redirect(`/topic/${id}`);
-  })
-  
-  
-  app.get('/topic/update/:pageId', function (request, response) {
-    var topic = db.get('topics').find({id:request.params.pageId}).value();
-    var title = topic.title;
-    var description = topic.description;
-    var list = template.list(request.list);
-    var html = template.HTML(title, list,
-      `<form action="/topic/update_process" method="post">
-        <input type="hidden" name="id" value="${topic.id}">
-        <p><input type="text" name="title" placeholder="title" value="${title}"></p>
-        <p><textarea name="description" placeholder="description">${description}</textarea></p>
-        <p><input type="submit" value="update"></p>
-      </form>
-      `,'',''
-    );
-    response.send(html);
-  })
-  
-  app.post('/topic/update_process', function (request, response) {
-    var post = request.body;
-    var id = post.id;
-    var title = post.title;
-    var description = post.description;
-    var topic = db.get('topics').find({id:id}).value();
-    db.get('topics').find({id:id}).assign({
-      title:title, description:description
-    }).write();
-    response.redirect(`/topic/${topic.id}`)
-  })
-  
-  app.post('/topic/delete_process', function (request, response) {
-    var post = request.body;
-    var id = post.id;
-    var topic = db.get('topics').find({id:id}).value();
-    db.get('topics').remove({id:id}).write();
-    response.redirect('/');
-  })
-  
-  app.get('/topic/:pageId', function (request, response, next) {
-    var topic = db.get('topics').find({
-      id: request.params.pageId
-    }).value();
-    var user = db.get('users').find({
-      id: topic.user_id
-    }).value();
-    
-    var sanitizedTitle = sanitizeHtml(topic.title);
-    var sanitizedDescription = sanitizeHtml(topic.description, {
-      allowedTags: ['h1']
-    });
-    var list = '';
-    var html = template.HTML(sanitizedTitle, list,
-      `<h2>${sanitizedTitle}</h2>
-      ${sanitizedDescription}
-      <p>by ${user.displayName}</p>
-      `,
-      auth.topicUI(request, response, topic),
-      ''
-    );
-    response.send(html);
-  });
 
 app.use(function(req, res, next){
   res.status(404).send('sorry cant find that!')
