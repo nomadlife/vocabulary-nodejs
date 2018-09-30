@@ -103,18 +103,30 @@ var control = {
     }
     return authTopicUI;
   },
-  chapterUI:function(request, response,chapter_id){
-    return `<br> <a href="/word/create/${chapter_id}">new word</a> 
-      <a href="/chapter/update/${chapter_id}">update</a>
+  chapterUI:function(request, response,chapter){
+    return `<br> <a href="/word/create/${chapter.id}">new word</a> 
+      <a href="/chapter/update/${chapter.id}">update</a>
       <form action="/chapter/delete_process" method="post" style="display: inline-block;">
-        <input type="hidden" name="id" value="${chapter_id}">
+        <input type="hidden" name="id" value="${chapter.id}">
+        <input type="hidden" name="book_id" value="${chapter.book_id}">
         <input type="submit" value="delete">
       </form>
       <br> 
       <form action="/word/import" method="POST" enctype="multipart/form-data" style="display: inline-block;">
       <input type="file" name="myfile" accept="text/*" onchange="this.form.submit()">
-      <input type="hidden" name="chapter_id" value="${chapter_id}">
+      <input type="hidden" name="chapter_id" value="${chapter.id}">
       </form>`;
+  },
+  wordUI:function(request, response, word){
+    return `<br> 
+      <a href="/word/update/${word.id}">update</a>
+      <form action="/word/delete_process" method="post" style="display: inline-block;">
+        <input type="hidden" name="id" value="${word.id}">
+        <input type="hidden" name="chapter_id" value="${word.chapter_id}">
+        <input type="submit" value="delete">
+      </form>
+      <br> 
+      `;
   }
 }   
 var shortid = require('shortid');
@@ -194,7 +206,7 @@ app.get('/', function (request, response) {
     var description = '';
     var list = template.chapterlist(chapters);
     var html = template.HTML(title, '',
-      `<br><b>${book.title}</b> by ${book.author}
+      `<br>${book.title} by ${book.author}
       ${list}`,
       control.bookUI(request, response, book.id),
       '' 
@@ -272,9 +284,10 @@ app.get('/', function (request, response) {
     var list = template.wordlist(word);
     //var sanitizedTitle = sanitizeHtml(topic.title);
     var html = template.HTML(title, '',
-      `<br><a href="/book/${book.id}">${book.title}</a> > <b>${chapter.title}</b>
+      `<br><a href="/book/${book.id}">${book.title}</a> > 
+      ${chapter.title}
       ${list}`,
-      control.chapterUI(request, response, chapter.id),
+      control.chapterUI(request, response, chapter),
       '' 
     );
     response.send(html)
@@ -304,6 +317,19 @@ app.get('/', function (request, response) {
     db.get('chapters').find({id:id}).assign({title:title}).write();
     response.redirect(`/chapter/${id}`)
   })
+
+  app.post('/chapter/delete_process', function (request, response) {
+    // hold !!!!11
+    console.log(' !!!!!! need update, check existing word list');
+    var post = request.body;
+    var id = post.id;
+    var book_id = post.book_id
+    console.log('id:',id);
+    console.log('book_id:',book_id);
+    //db.get('chapters').remove({id:id}).write();
+    response.redirect(`/book/${post.book_id}`);
+  })
+
 
  
   app.get('/word/create/:chapterId', function (request, response) {
@@ -365,6 +391,68 @@ app.get('/', function (request, response) {
     response.redirect(`/chapter/${chapter_id}`);
   })
 
+  app.get('/word/:wordId', function (request, response) {
+    var word = db.get('words').find({id: request.params.wordId}).value();
+    var chapter = db.get('chapters').find({id: word.chapter_id}).value();
+    var book = db.get('books').find({id: chapter.book_id}).value();
+    var title = '';
+    var description = '';
+    var list = '';
+    //var sanitizedTitle = sanitizeHtml(topic.title);
+    var html = template.HTML(title, '',
+      `<br><a href="/book/${book.id}">${book.title}</a> > 
+      <a href="/chapter/${chapter.id}">${chapter.title}</a> >
+      ${word.title}
+      <br><br>
+      ${word.title} : ${word.meaning} <br>`,
+      control.wordUI(request, response, word),
+      '' 
+    );
+    response.send(html)
+  })
+
+  app.get('/word/update/:wordId', function (request, response) {
+    var word = db.get('words').find({id: request.params.wordId}).value();
+    var chapter = db.get('chapters').find({id: word.chapter_id}).value();
+    var book = db.get('books').find({id: chapter.book_id}).value();
+    var title = '';
+    var list = '';
+    console.log(word);
+    
+    var html = template.HTML(title, list,
+      `<br><a href="/book/${book.id}">${book.title}</a> > 
+      <a href="/chapter/${chapter.id}">${chapter.title}</a> >
+      ${word.title}
+      <br>
+      <form action="/word/update_process" method="post">
+          <input type="hidden" name="id" value="${word.id}">
+          <p><input type="text" name="title" placeholder="word" value="${word.title}"></p>
+          <p><textarea name="meaning" placeholder="meaning">${word.meaning}</textarea></p>
+          <p><input type="submit" value="update"></p>
+        </form>
+      `,'',''
+    );
+    response.send(html);
+  })
+ 
+  app.post('/word/update_process', function (request, response) {
+    var post = request.body;
+    var id = post.id;
+    var title = post.title;
+    var meaning = post.meaning;
+    db.get('words').find({id:id}).assign({title:title,meaning:meaning}).write();
+    response.redirect(`/word/${id}`)
+  })
+
+  app.post('/word/delete_process', function (request, response) {
+    var post = request.body;
+    var id = post.id;
+    var chapter_id = post.chapter_id
+    console.log('id:',id);
+    console.log('chapter_id:',chapter_id);
+    //db.get('words').remove({id:id}).write();
+    response.redirect(`/chapter/${post.chapter_id}`);
+})
 
 
   app.get('/topic/list', function (request, response) {
