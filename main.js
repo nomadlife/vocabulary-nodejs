@@ -31,13 +31,28 @@ var template = {
       <body>
         <h1><a href="/">vocabulary</a></h1>
         <a href="/book/list">books</a>
-        <a href="/book/list">words</a><br>
+        <a href="/word/all">all words</a><br>
         ${list}
         ${body}
         ${control}
       </body>
       </html>
       `;
+    },allwordlist:function(filelist){
+      var list = `<br><table border='1' style="border: 1px solid black;border-collapse:collapse;">
+      <tr><th>book</th><th>chapter</th><th>words</th><th>meaning</th></tr>`;
+      var i = 0;
+      while((filelist) && i < filelist.length){
+        list = list + `<tr>
+        <td>${filelist[i].book}</td>
+        <td>${filelist[i].chapter}</td>
+        <td><a href="/word/${filelist[i].id}">${filelist[i].title}</a></td>
+        <td>${filelist[i].meaning}</td>
+        </tr>`;
+        i = i + 1;
+      }
+      list = list+'</table>'; 
+      return list;
     },wordlist:function(filelist){
       var list = `<br><table border='1' style="border: 1px solid black;border-collapse:collapse;">
       <tr><th>words</th><th>meaning</th></tr>`;
@@ -365,6 +380,45 @@ app.get('/', function (request, response) {
       i = i + 1
     }
     response.redirect(`/chapter/${chapter_id}`);
+  })
+
+  app.get('/word/all', function (request, response) {
+    var book = db.get('books').value();
+    console.log('test',db.get('words').value());
+    
+    var i,j,k;
+    //console.log('book:',book);
+    var word = []
+    for(i = 0; i<book.length; i++){
+      var chapter = db.get('chapters').filter({book_id: book[i].id}).value();
+      //console.log('book:',i,'chapter:',chapter);
+      for(j = 0; j<chapter.length; j++){
+        temp = db.get('words').filter({chapter_id: chapter[j].id}).value();
+        //console.log('word:',i,j,temp);
+        for(k = 0; k<temp.length; k++){
+          temp[k].chapter = chapter[j].title;
+          temp[k].book = book[i].title;
+        }
+        word = word.concat(temp)
+      }
+    }
+    console.log('result',word);
+    
+    //var chapter = db.get('chapters').find({id: word.chapter_id}).value();
+    //var word = db.get('words').find({id: request.params.wordId}).value();
+    var title = '';
+    var description = '';
+    var list = template.allwordlist(word);
+    //var sanitizedTitle = sanitizeHtml(topic.title);
+    var html = template.HTML(title, '',
+      `<br>
+      ${list}
+      <br>
+      `,
+      '',
+      '' 
+    );
+    response.send(html)
   })
 
   app.get('/word/:wordId', function (request, response) {
