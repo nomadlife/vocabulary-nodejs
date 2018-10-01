@@ -1,10 +1,13 @@
-1. all word list(not duplicated, or duplicated?)
-2. word click -> same word(duplicated) filter
-3. word statistic
-4. template refactoring
+1. all word list(not duplicated, or duplicated?) - done
+- table span vertically
 
-4. user login
-5. reply function
+2-1. word click -> same word(duplicated) filter
+2-2. word statistic
+2-3. template refactoring
+2-4. sanitazation
 
-6. movie, tv shows 
-7. user function(recent, recommendation)
+3-1. user login
+3-2. reply function
+
+4-1. movie, tv shows 
+4-2. user function(recent, recommendation)

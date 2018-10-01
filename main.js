@@ -38,23 +38,45 @@ var template = {
       </body>
       </html>
       `;
-    },allwordlist:function(filelist){
-      var list = `<br><table border='1' style="border: 1px solid black;border-collapse:collapse;">
+    },allwordlistspan:function(filelist){
+      var list = `<br><table cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
       <tr><th>book</th><th>chapter</th><th>words</th><th>meaning</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
-        list = list + `<tr>
-        <td>${filelist[i].book}</td>
+        var tag = '' 
+        var attr = ''
+        if(filelist[i].book){
+          tag = `<td rowspan=3>${filelist[i].book}</td>
+          <td rowspan=3>${filelist[i].chapter}</td>`
+        } else {
+          attr = 'valign=middle'
+        }
+        list = list + `<tr>${tag}
+        <td ${attr}><a href="/word/${filelist[i].id}">${filelist[i].title}</a></td>
+        <td ${attr}>${filelist[i].meaning}</td>
+        </tr>`;
+        i = i + 1;
+        
+      }
+      list = list+'</table>'; 
+      return list;
+    },allwordlist:function(filelist){
+      var list = `<br><table cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
+      <tr><th>book</th><th>chapter</th><th>words</th><th>meaning</th></tr>`;
+      var i = 0;
+      while((filelist) && i < filelist.length){
+        list = list + `<tr><td>${filelist[i].book}</td>
         <td>${filelist[i].chapter}</td>
         <td><a href="/word/${filelist[i].id}">${filelist[i].title}</a></td>
         <td>${filelist[i].meaning}</td>
         </tr>`;
         i = i + 1;
+        
       }
       list = list+'</table>'; 
       return list;
     },wordlist:function(filelist){
-      var list = `<br><table border='1' style="border: 1px solid black;border-collapse:collapse;">
+      var list = `<br><table  cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
       <tr><th>words</th><th>meaning</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
@@ -67,7 +89,7 @@ var template = {
       list = list+'</table>'; 
       return list;
     },chapterlist:function(filelist){
-      var list = `<br> <table border='1' style="border: 1px solid black;border-collapse:collapse;">
+      var list = `<br> <table  cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
       <tr><th>chapters</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
@@ -80,7 +102,7 @@ var template = {
       return list;
     },
     booklist:function(filelist){
-      var list = `<br><table border='1' style="border: 1px solid black;border-collapse:collapse;">
+      var list = `<br><table  cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
       <tr><th>title</th><th>author</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
@@ -384,28 +406,25 @@ app.get('/', function (request, response) {
 
   app.get('/word/all', function (request, response) {
     var book = db.get('books').value();
-    console.log('test',db.get('words').value());
-    
     var i,j,k;
-    //console.log('book:',book);
     var word = []
     for(i = 0; i<book.length; i++){
       var chapter = db.get('chapters').filter({book_id: book[i].id}).value();
-      //console.log('book:',i,'chapter:',chapter);
       for(j = 0; j<chapter.length; j++){
         temp = db.get('words').filter({chapter_id: chapter[j].id}).value();
-        //console.log('word:',i,j,temp);
-        for(k = 0; k<temp.length; k++){
+        for(k=0;k<temp.length;k++){
           temp[k].chapter = chapter[j].title;
           temp[k].book = book[i].title;
         }
+        // if(temp.length>0){
+        //   temp[0].chapter = chapter[j].title;
+        //   temp[0].book = book[i].title;
+        // }
         word = word.concat(temp)
       }
     }
     console.log('result',word);
     
-    //var chapter = db.get('chapters').find({id: word.chapter_id}).value();
-    //var word = db.get('words').find({id: request.params.wordId}).value();
     var title = '';
     var description = '';
     var list = template.allwordlist(word);
