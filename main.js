@@ -38,7 +38,7 @@ var template = {
       </body>
       </html>
       `;
-    },allwordlistfull_span:function(filelist){
+    },allwordlist_span:function(filelist){
       var book = {}
       var chapter =  {}
       filelist.forEach(function (ob, i) {
@@ -55,7 +55,6 @@ var template = {
           chapter[i] = i
         }
       });
-      console.log(book, chapter);
       var list = `<br><table cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
       <tr><th>book</th><th>chapter</th><th>words</th><th>meaning</th></tr>
       <tr>`;
@@ -66,11 +65,10 @@ var template = {
         if(i in chapter){
           list = list + `<td rowspan=${chapter[ob.book+ob.chapter]}>${ob.chapter}</td>`
         }
-        list = list + `<td valign=middle><a href="/word/${ob.id}">${filelist[i].title}</a></td>
+        list = list + `<td valign=middle><a href="/word/${ob.id}">${ob.title}</a></td>
         <td>${ob.meaning}</td>
         </tr>`;
       });
-
       list = list+'</table>'; 
       return list;
     },allwordlist:function(filelist){
@@ -420,29 +418,21 @@ app.get('/', function (request, response) {
   app.get('/word/all', function (request, response) {
     var book = db.get('books').value();
     var i,j,k;
-    var word = []
+    var wordlist = []
     for(i = 0; i<book.length; i++){
       var chapter = db.get('chapters').filter({book_id: book[i].id}).value();
       for(j = 0; j<chapter.length; j++){
-        temp = db.get('words').filter({chapter_id: chapter[j].id}).value();
-        // full list
-        for(k=0;k<temp.length;k++){
-          temp[k].chapter = chapter[j].title;
-          temp[k].book = book[i].title;
+        word = db.get('words').filter({chapter_id: chapter[j].id}).value();
+        for(k=0;k<word.length;k++){
+          word[k].chapter = chapter[j].title;
+          word[k].book = book[i].title;
         }
-        // //part list
-        // if(temp.length>0){
-        //   temp[0].chapter = chapter[j].title;
-        //   temp[0].book = book[i].title;
-        // }
-        word = word.concat(temp)
+        wordlist = wordlist.concat(word)
       }
     }
-    // console.log('result',word);
-    
     var title = '';
     var description = '';
-    var list = template.allwordlistfull_span(word);
+    var list = template.allwordlist_span(wordlist);
     //var sanitizedTitle = sanitizeHtml(topic.title);
     var html = template.HTML(title, '',
       `<br>
