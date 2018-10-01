@@ -38,26 +38,39 @@ var template = {
       </body>
       </html>
       `;
-    },allwordlistspan:function(filelist){
-      var list = `<br><table cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
-      <tr><th>book</th><th>chapter</th><th>words</th><th>meaning</th></tr>`;
-      var i = 0;
-      while((filelist) && i < filelist.length){
-        var tag = '' 
-        var attr = ''
-        if(filelist[i].book){
-          tag = `<td rowspan=3>${filelist[i].book}</td>
-          <td rowspan=3>${filelist[i].chapter}</td>`
-        } else {
-          attr = 'valign=middle'
+    },allwordlistfull_span:function(filelist){
+      var book = {}
+      var chapter =  {}
+      filelist.forEach(function (ob, i) {
+        if(ob.book in book){
+          book[ob.book] ++
+        }else{
+          book[ob.book] = 1
+          book[i] = i
         }
-        list = list + `<tr>${tag}
-        <td ${attr}><a href="/word/${filelist[i].id}">${filelist[i].title}</a></td>
-        <td ${attr}>${filelist[i].meaning}</td>
+        if(ob.book+ob.chapter in chapter){
+          chapter[ob.book+ob.chapter] ++
+        }else{
+          chapter[ob.book+ob.chapter] = 1
+          chapter[i] = i
+        }
+      });
+      console.log(book, chapter);
+      var list = `<br><table cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
+      <tr><th>book</th><th>chapter</th><th>words</th><th>meaning</th></tr>
+      <tr>`;
+      filelist.forEach(function (ob, i) {
+        if(i in book){
+          list = list + `<td rowspan=${book[ob.book]}>${ob.book}</td>`
+        }
+        if(i in chapter){
+          list = list + `<td rowspan=${chapter[ob.book+ob.chapter]}>${ob.chapter}</td>`
+        }
+        list = list + `<td valign=middle><a href="/word/${ob.id}">${filelist[i].title}</a></td>
+        <td>${ob.meaning}</td>
         </tr>`;
-        i = i + 1;
-        
-      }
+      });
+
       list = list+'</table>'; 
       return list;
     },allwordlist:function(filelist){
@@ -412,10 +425,12 @@ app.get('/', function (request, response) {
       var chapter = db.get('chapters').filter({book_id: book[i].id}).value();
       for(j = 0; j<chapter.length; j++){
         temp = db.get('words').filter({chapter_id: chapter[j].id}).value();
+        // full list
         for(k=0;k<temp.length;k++){
           temp[k].chapter = chapter[j].title;
           temp[k].book = book[i].title;
         }
+        // //part list
         // if(temp.length>0){
         //   temp[0].chapter = chapter[j].title;
         //   temp[0].book = book[i].title;
@@ -423,11 +438,11 @@ app.get('/', function (request, response) {
         word = word.concat(temp)
       }
     }
-    console.log('result',word);
+    // console.log('result',word);
     
     var title = '';
     var description = '';
-    var list = template.allwordlist(word);
+    var list = template.allwordlistfull_span(word);
     //var sanitizedTitle = sanitizeHtml(topic.title);
     var html = template.HTML(title, '',
       `<br>
