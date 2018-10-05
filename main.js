@@ -247,7 +247,7 @@ var passport = require('passport'),
 
 
 
-app.get('/', function (request, response) {
+app.get('/', function main(request, response) {
     var html = template.HTML('', '',
       `
       <h2></h2>Hello, Node.js`,
@@ -257,7 +257,7 @@ app.get('/', function (request, response) {
     response.send(html)
   })
 
-  app.get('/book/list', function (request, response) {
+  app.get('/book/list', function book_list(request, response) {
     var books = db.get('books').value();
     var title = '';
     var description = '';
@@ -270,7 +270,7 @@ app.get('/', function (request, response) {
     response.send(html)
   })
 
-  app.get('/book/create', function (request, response) {
+  app.get('/book/create', function book_cre(request, response) {
     var title = 'WEB - create';
     var books = db.get('books').value();
     var list = template.booklist(books);
@@ -285,7 +285,7 @@ app.get('/', function (request, response) {
     response.send(html);
   })
 
-  app.post('/book/create_process', function (request, response) {
+  app.post('/book/create_process', function book_cre_p(request, response) {
     var post = request.body;
     var title = post.title;
     var author = post.author;
@@ -298,7 +298,7 @@ app.get('/', function (request, response) {
     response.redirect(`/book/list`);
   })
 
-  app.get('/book/:bookId', function (request, response) {
+  app.get('/book/:bookId', function books(request, response) {
     var book = db.get('books').find({id: request.params.bookId}).value();
     var chapters = db.get('chapters').filter({book_id: book.id}).value();
     var title = '';
@@ -313,7 +313,7 @@ app.get('/', function (request, response) {
     response.send(html)
   })
 
-  app.get('/book/update/:bookId', function (request, response) {
+  app.get('/book/update/:bookId', function book_up(request, response) {
     var book = db.get('books').find({id:request.params.bookId}).value();
     var title = '';
     var list = '';
@@ -330,7 +330,7 @@ app.get('/', function (request, response) {
     response.send(html);
   })
 
-  app.post('/book/update_process', function (request, response) {
+  app.post('/book/update_process', function book_up_p(request, response) {
     var post = request.body;
     var id = post.id;
     var title = post.title;
@@ -339,7 +339,7 @@ app.get('/', function (request, response) {
     response.redirect(`/book/${id}`)
   })
 
-  app.post('/book/delete_process', function (request, response) {
+  app.post('/book/delete_process', function book_del_p(request, response) {
     // hold !!!
     console.log('need to check if there are chapters and word included');
     var post = request.body;
@@ -349,7 +349,7 @@ app.get('/', function (request, response) {
   })
 
 
-  app.get('/chapter/create/:bookId', function (request, response) {
+  app.get('/chapter/create/:bookId', function chap_cre(request, response) {
     var book = db.get('books').find({id:request.params.bookId}).value();
     var chapters = db.get('chapters').filter({book_id: book.id}).value();
     var title = 'WEB - create';
@@ -366,7 +366,7 @@ app.get('/', function (request, response) {
     response.send(html);
   })
 
-  app.post('/chapter/create_process', function (request, response) {
+  app.post('/chapter/create_process', function chap_cre_p(request, response) {
     var post = request.body;
     var book_id = post.book_id;
     var chapter = post.chapter;
@@ -379,7 +379,7 @@ app.get('/', function (request, response) {
     response.redirect(`/book/${book_id}`);
   })
 
-  app.get('/chapter/:chapterId', function (request, response) {
+  app.get('/chapter/:chapterId', function chapters(request, response) {
     var chapter = db.get('chapters').find({id: request.params.chapterId}).value();
     var word = db.get('words').filter({chapter_id: chapter.id}).value();
     var book = db.get('books').find({id: chapter.book_id}).value();
@@ -397,7 +397,7 @@ app.get('/', function (request, response) {
     response.send(html)
   })
 
-  app.get('/chapter/update/:chapterId', function (request, response) {
+  app.get('/chapter/update/:chapterId', function chap_up(request, response) {
     var chapter = db.get('chapters').find({id:request.params.chapterId}).value();
     var book = db.get('books').find({id: chapter.book_id}).value();
     var title = '';
@@ -415,7 +415,7 @@ app.get('/', function (request, response) {
     response.send(html);
   })
  
-  app.post('/chapter/update_process', function (request, response) {
+  app.post('/chapter/update_process', function chap_up(request, response) {
     var post = request.body;
     var id = post.id;
     var title = post.title;
@@ -423,7 +423,7 @@ app.get('/', function (request, response) {
     response.redirect(`/chapter/${id}`)
   })
 
-  app.post('/chapter/delete_process', function (request, response) {
+  app.post('/chapter/delete_process', function chap_del_p(request, response) {
     // hold !!!!11
     console.log('!!!!!! need to check if there existing word');
     var post = request.body;
@@ -434,7 +434,7 @@ app.get('/', function (request, response) {
   })
 
  
-  app.get('/word/create/:chapterId', function (request, response) {
+  app.get('/word/create/:chapterId', function word_cre(request, response) {
     var chapter = db.get('chapters').find({id:request.params.chapterId}).value();
     var word = db.get('words').filter({chapter_id: chapter.id}).value();
     var book = db.get('books').find({id:chapter.book_id}).value();
@@ -454,7 +454,7 @@ app.get('/', function (request, response) {
     response.send(html);
   })
 
-  app.post('/word/create_process', function (request, response) {
+  app.post('/word/create_process', function word_cre_p(request, response) {
     var post = request.body;
     var chapter_id = post.chapter_id;
     var word = post.word;
@@ -469,7 +469,7 @@ app.get('/', function (request, response) {
     response.redirect(`/chapter/${chapter_id}`);
   })
 
-  app.post('/word/import', upload.single('myfile'), function (request, response) {
+  app.post('/word/import', upload.single('myfile'), function word_imp(request, response) {
     var post = request.body; 
     var chapter_id = post.chapter_id
     var data = request.file.buffer.toString('utf8').trim().split('\r\n')
@@ -487,7 +487,7 @@ app.get('/', function (request, response) {
     response.redirect(`/chapter/${chapter_id}`);
   })
 
-  app.get('/word/all', function (request, response) {
+  app.get('/word/all', function wordall(request, response) {
     var book = db.get('books').value();
     var i,j,k;
     var wordlist = []
@@ -517,7 +517,7 @@ app.get('/', function (request, response) {
     response.send(html)
   })
 
-  app.get('/word/:wordId', function (request, response) {
+  app.get('/word/:wordId', function words(request, response) {
     var word = db.get('words').find({id: request.params.wordId}).value();
     var chapter = db.get('chapters').find({id: word.chapter_id}).value();
     var book = db.get('books').find({id: chapter.book_id}).value();
@@ -539,7 +539,7 @@ app.get('/', function (request, response) {
     response.send(html)
   })
 
-  app.get('/word/update/:wordId', function (request, response) {
+  app.get('/word/update/:wordId', function update(request, response) {
     var word = db.get('words').find({id: request.params.wordId}).value();
     var chapter = db.get('chapters').find({id: word.chapter_id}).value();
     var book = db.get('books').find({id: chapter.book_id}).value();
@@ -564,7 +564,7 @@ app.get('/', function (request, response) {
     response.send(html);
   })
  
-  app.post('/word/update_process', function (request, response) {
+  app.post('/word/update_process', function word_up_p(request, response) {
     var post = request.body;
     var id = post.id;
     var chapter_id = post.chapter_id
@@ -574,7 +574,7 @@ app.get('/', function (request, response) {
     response.redirect(`/chapter/${chapter_id}`)
   })
 
-  app.post('/word/delete_process', function (request, response) {
+  app.post('/word/delete_process', function word_del_p(request, response) {
     var post = request.body;
     var id = post.id;
     var chapter_id = post.chapter_id
@@ -584,7 +584,7 @@ app.get('/', function (request, response) {
 
 
 
-app.get('/login', function (request, response) {
+app.get('/login', function user_login(request, response) {
   var fmsg = request.flash();
   var feedback = '';
   if (fmsg.success) {
@@ -607,15 +607,14 @@ app.get('/login', function (request, response) {
 })
 
 
-app.post('/login_process',
-passport.authenticate('local', {
+app.post('/login_process', passport.authenticate('local', {
   successRedirect: '/',
   failureRedirect: '/login',
   failureFlash: true,
   successFlash: true
 }));
 
-app.get('/register', function (request, response) {
+app.get('/register', function user_register(request, response) {
   var fmsg = request.flash();
   var feedback = '';
   if (fmsg.success) {
@@ -637,7 +636,7 @@ var html = template.HTML(title, list, `
 response.send(html);
 })
 
-app.post('/register_process', function (request, response) {
+app.post('/register_process', function user_reg_p(request, response) {
 // todo : validation
 // check email duplicaation check
 // check if pwd,pwd2 are same
@@ -669,7 +668,7 @@ if(pwd !== pwd2){
   }
 });
 
-app.get('/logout', function (request, response) {
+app.get('/logout', function user_logout(request, response) {
 request.logout();
 response.redirect('/');
 })
