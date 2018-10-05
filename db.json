@@ -83,5 +83,12 @@
       "chapter_id": "W9Yt94JAf"
     }
   ],
-  "users": []
+  "users": [
+    {
+      "id": "yJ4jPAa5M",
+      "email": "test1@gmail.com",
+      "password": "$2a$10$aCNpw.dL/SnzrqiOaE5z.e4uurUQ0NjcVIrKpSnBXkyc1N3dS3XtS",
+      "displayName": "tester1"
+    }
+  ]
 }

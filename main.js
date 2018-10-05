@@ -9,6 +9,7 @@ var bcrypt = require('bcryptjs');
 var session = require('express-session')
 var FileStore = require('session-file-store')(session)
 var flash = require('connect-flash');
+
 app.use(session({
   //secure: true, //for https connection
   secret: 'keyboard cat',
@@ -146,7 +147,7 @@ var control = {
   loginUI:function(request, response){
     var authStatusUI = '<a href="/login">login</a> | <a href="/register">Register</a>'
     if(request.user){
-      authStatusUI = `${request.user.displayName}|<a href="/auth/logout">logout</a>`;
+      authStatusUI = `${request.user.displayName}|<a href="/logout">logout</a>`;
     }
     return authStatusUI;
   },
@@ -197,8 +198,8 @@ app.use(bodyParser.urlencoded({extended:false}))
 app.use(compression());
   
 
-var passport = require('passport'),
-        LocalStrategy = require('passport-local').Strategy;
+var passport = require('passport');
+var LocalStrategy = require('passport-local').Strategy;
 
     app.use(passport.initialize())
     app.use(passport.session())
@@ -211,7 +212,7 @@ var passport = require('passport'),
 
     passport.deserializeUser(function (id, done) {
         var user = db.get('users').find({ id: id }).value();
-        console.log('deserializeUser', id, user);
+        // console.log('deserializeUser', id, user);
         done(null, user);
     });
 
@@ -241,6 +242,8 @@ var passport = require('passport'),
                     message: 'Invalid email'
                 });
             }
+            // console.log('local strategy', message);
+            
 
         }
     ));
@@ -248,6 +251,7 @@ var passport = require('passport'),
 
 
 app.get('/', function main(request, response) {
+  // console.log(request.flash());
     var html = template.HTML('', '',
       `
       <h2></h2>Hello, Node.js`,
@@ -545,7 +549,6 @@ app.get('/', function main(request, response) {
     var book = db.get('books').find({id: chapter.book_id}).value();
     var title = '';
     var list = '';
-    console.log(word);
     
     var html = template.HTML(title, list,
       `<br><a href="/book/${book.id}">${book.title}</a> > 
@@ -590,6 +593,8 @@ app.get('/login', function user_login(request, response) {
   if (fmsg.success) {
     feedback = fmsg.success[0];
   }
+  // console.log('feedback:',feedback);
+  
 
   var title = 'WEB - login';
   var list = '';
