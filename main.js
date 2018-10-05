@@ -205,14 +205,11 @@ var LocalStrategy = require('passport-local').Strategy;
     app.use(passport.session())
 
     passport.serializeUser(function (user, done) {
-        console.log('serializeUser', user);
-
         done(null, user.id)
     });
 
     passport.deserializeUser(function (id, done) {
         var user = db.get('users').find({ id: id }).value();
-        // console.log('deserializeUser', id, user);
         done(null, user);
     });
 
@@ -242,19 +239,21 @@ var LocalStrategy = require('passport-local').Strategy;
                     message: 'Invalid email'
                 });
             }
-            // console.log('local strategy', message);
-            
-
         }
     ));
 
 
 
 app.get('/', function main(request, response) {
-  // console.log(request.flash());
+  var fmsg = request.flash();
+  var feedback = '';
+  if (fmsg.success) {
+    feedback = fmsg.success[0];
+  }
     var html = template.HTML('', '',
       `
-      <h2></h2>Hello, Node.js`,
+      <div style="color:red;"> ${feedback}</div>
+      <h2>Hello, Node.js</h2>`,
       '',
       control.loginUI(request,response)
     );
@@ -590,11 +589,9 @@ app.get('/', function main(request, response) {
 app.get('/login', function user_login(request, response) {
   var fmsg = request.flash();
   var feedback = '';
-  if (fmsg.success) {
-    feedback = fmsg.success[0];
+  if (fmsg.error) {
+    feedback = fmsg.error[0];
   }
-  // console.log('feedback:',feedback);
-  
 
   var title = 'WEB - login';
   var list = '';
@@ -613,10 +610,10 @@ app.get('/login', function user_login(request, response) {
 
 
 app.post('/login_process', passport.authenticate('local', {
-  successRedirect: '/',
-  failureRedirect: '/login',
   failureFlash: true,
-  successFlash: true
+  successFlash: true,
+  successRedirect: '/',
+  failureRedirect: '/login'
 }));
 
 app.get('/register', function user_register(request, response) {
