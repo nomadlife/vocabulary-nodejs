@@ -4,7 +4,20 @@ var bodyParser = require('body-parser');
 var compression = require('compression');
 var sanitizeHtml = require('sanitize-html');
 var fs = require('fs');
- 
+var bcrypt = require('bcryptjs');
+
+var session = require('express-session')
+var FileStore = require('session-file-store')(session)
+var flash = require('connect-flash');
+app.use(session({
+  //secure: true, //for https connection
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: false,
+  store:new FileStore()
+}))
+app.use(flash());
+
 var multer  = require('multer')
 var storage = multer.memoryStorage()
 var upload = multer({ storage: storage })
@@ -16,11 +29,12 @@ var db = low(adapter);
 db.defaults({
   books: [],
   chapters: [],
-  words:[]
+  words:[],
+  users: []
 }).write();
 
 var template = {
-    HTML:function(title, list, body, control, authStatusU){
+    HTML:function(title, list, body, control, loginUI){
       return `
       <!doctype html>
       <html>
@@ -29,6 +43,7 @@ var template = {
         <meta charset="utf-8">
       </head>
       <body>
+      ${loginUI}
         <h1><a href="/">vocabulary</a></h1>
         <a href="/book/list">books</a>
         <a href="/word/all">all words</a><br>
@@ -128,6 +143,13 @@ var template = {
     }
   }
 var control = {
+  loginUI:function(request, response){
+    var authStatusUI = '<a href="/login">login</a> | <a href="/register">Register</a>'
+    if(request.user){
+      authStatusUI = `${request.user.displayName}|<a href="/auth/logout">logout</a>`;
+    }
+    return authStatusUI;
+  },
   bookUI:function(request, response,book_id){
     var authTopicUI =  '<br> <a href="/book/create">new book</a>'
     if(book_id){
@@ -175,12 +197,62 @@ app.use(bodyParser.urlencoded({extended:false}))
 app.use(compression());
   
 
+var passport = require('passport'),
+        LocalStrategy = require('passport-local').Strategy;
+
+    app.use(passport.initialize())
+    app.use(passport.session())
+
+    passport.serializeUser(function (user, done) {
+        console.log('serializeUser', user);
+
+        done(null, user.id)
+    });
+
+    passport.deserializeUser(function (id, done) {
+        var user = db.get('users').find({ id: id }).value();
+        console.log('deserializeUser', id, user);
+        done(null, user);
+    });
+
+    passport.use(new LocalStrategy(
+        {
+            usernameField: 'email',
+            passwordField: 'pwd'
+        },
+        function (email, password, done) {
+            console.log('LocalStrategy', email, password);
+            var user = db.get('users').find({ email: email }).value();
+            if (user) {
+                bcrypt.compare(password, user.password, function(err, result){
+                    if(result){
+                        return done(null, user, {
+                            message: 'Welcome'
+                        });
+                    }else{
+                        return done(null, false, {
+                            message: 'Invalid password'
+                        });
+                    };
+                })
+                
+            } else {
+                return done(null, false, {
+                    message: 'Invalid email'
+                });
+            }
+
+        }
+    ));
+
+
+
 app.get('/', function (request, response) {
     var html = template.HTML('', '',
       `
       <h2></h2>Hello, Node.js`,
       '',
-      ''
+      control.loginUI(request,response)
     );
     response.send(html)
   })
@@ -509,6 +581,100 @@ app.get('/', function (request, response) {
     db.get('words').remove({id:id}).write();
     response.redirect(`/chapter/${post.chapter_id}`);
 })
+
+
+
+app.get('/login', function (request, response) {
+  var fmsg = request.flash();
+  var feedback = '';
+  if (fmsg.success) {
+    feedback = fmsg.success[0];
+  }
+
+  var title = 'WEB - login';
+  var list = '';
+  var html = template.HTML(title, list, `
+<div style="color:red;">${feedback}</div>
+<form action="/login_process" method="post">
+<p><input type="text" name="email" placeholder="email" value="test@gmail.com"></p>
+<p><input type="password" name="pwd" placeholder="password" value="111111"></p>
+<p>
+<input type="submit" value="login">
+</p>
+</form>
+`, '' ,control.loginUI(request, response));
+  response.send(html);
+})
+
+
+app.post('/login_process',
+passport.authenticate('local', {
+  successRedirect: '/',
+  failureRedirect: '/login',
+  failureFlash: true,
+  successFlash: true
+}));
+
+app.get('/register', function (request, response) {
+  var fmsg = request.flash();
+  var feedback = '';
+  if (fmsg.success) {
+    feedback = fmsg.success[0];
+  }
+
+var title = 'WEB - register';
+var list = '';
+var html = template.HTML(title, list, `
+<div style="color:red;">${feedback}</div>
+<form action="/register_process" method="post">
+<p><input type="text" name="email" placeholder="email" value="test2@gmail.com"></p>
+<p><input type="password" name="pwd" placeholder="password" value="111111"></p>
+<p><input type="password" name="pwd2" placeholder="password" value="111111"></p>
+<p><input type="text" name="displayName" placeholder="display name" value="tester2"></p>
+<p><input type="submit" value="register"></p>
+</form>
+`, '',control.loginUI(request, response));
+response.send(html);
+})
+
+app.post('/register_process', function (request, response) {
+// todo : validation
+// check email duplicaation check
+// check if pwd,pwd2 are same
+var post = request.body;
+var email = post.email;
+var pwd = post.pwd;
+var pwd2 = post.pwd2;
+var displayName = post.displayName;
+if(pwd !== pwd2){
+  request.flash('error','password must same!');
+  response.redirect('/auth/register');
+}else{
+  bcrypt.hash(pwd, 10, function(err, hash) {
+    console.log('hash',hash);
+    var user = {
+      id:shortid.generate(),
+      email:email,
+      password:hash,
+      displayName:displayName
+    }
+      db.get('users').push(user).write();
+      request.login(user, function(err){
+        console.log('redirect');
+        return response.redirect('/');
+      })
+});
+
+
+  }
+});
+
+app.get('/logout', function (request, response) {
+request.logout();
+response.redirect('/');
+})
+
+
 
 
 app.use(function(req, res, next){
