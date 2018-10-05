@@ -1,5 +1,11 @@
 var express = require('express')
 var app = express()
+app.locals.pretty = true;
+app.set('view engine', 'jade')
+app.set('views', './views');
+app.get('/template',function(request, response){
+  response.render('temp', {time:Date(), title:'jade'})
+})
 var bodyParser = require('body-parser');
 var compression = require('compression');
 var sanitizeHtml = require('sanitize-html');
