@@ -265,7 +265,7 @@ app.get('/', function main(request, response) {
     var html = template.HTML(title, list,
       `<h2>${title}</h2>${description}`,
       control.bookUI(request, response),
-      ''
+      control.loginUI(request, response)
     );
     response.send(html)
   })
@@ -281,7 +281,7 @@ app.get('/', function main(request, response) {
           <p><input type="text" name="author" placeholder="author"></p>
           <p><input type="submit" value="create"></p>
         </form>
-      `, '', '');
+      `, '', control.loginUI(request, response));
     response.send(html);
   })
 
@@ -308,7 +308,7 @@ app.get('/', function main(request, response) {
       `<br><a href="/book/${book.id}">${book.title}</a> by ${book.author}
       ${list}`,
       control.bookUI(request, response, book.id),
-      '' 
+      control.loginUI(request, response) 
     );
     response.send(html)
   })
@@ -325,7 +325,7 @@ app.get('/', function main(request, response) {
         <p><input type="text" name="author" placeholder="author" value="${book.author}"></p>
         <p><input type="submit" value="update"></p>
       </form>
-      `,'',''
+      `,'',control.loginUI(request, response)
     );
     response.send(html);
   })
@@ -362,7 +362,7 @@ app.get('/', function main(request, response) {
           <p><input type="text" name="chapter" placeholder="chapter"></p>
           <p><input type="submit" value="create chapter"></p>
         </form>
-      `, '', '');
+      `, '', control.loginUI(request, response));
     response.send(html);
   })
 
@@ -392,7 +392,7 @@ app.get('/', function main(request, response) {
       <a href="/chapter/${chapter.id}">${chapter.title}</a>
       ${list}`,
       control.chapterUI(request, response, chapter),
-      '' 
+      control.loginUI(request, response) 
     );
     response.send(html)
   })
@@ -410,7 +410,7 @@ app.get('/', function main(request, response) {
         <p><input type="text" name="title" placeholder="chapter title" value="${chapter.title}"></p>
         <p><input type="submit" value="update"></p>
       </form>
-      `,'',''
+      `,'',control.loginUI(request, response)
     );
     response.send(html);
   })
@@ -450,7 +450,7 @@ app.get('/', function main(request, response) {
           <p><textarea name="meaning" placeholder="meaning"></textarea></p>
           <p><input type="submit" value="create word"></p>
         </form>
-      `, '', '');
+      `, '', control.loginUI(request, response));
     response.send(html);
   })
 
@@ -512,7 +512,7 @@ app.get('/', function main(request, response) {
       <br>
       `,
       '',
-      '' 
+      control.loginUI(request, response) 
     );
     response.send(html)
   })
@@ -534,12 +534,12 @@ app.get('/', function main(request, response) {
       ${word.title} : ${word.meaning}
       <br>`,
       control.wordUI(request, response, word),
-      '' 
+      control.loginUI(request, response) 
     );
     response.send(html)
   })
 
-  app.get('/word/update/:wordId', function update(request, response) {
+  app.get('/word/update/:wordId', function word_up(request, response) {
     var word = db.get('words').find({id: request.params.wordId}).value();
     var chapter = db.get('chapters').find({id: word.chapter_id}).value();
     var book = db.get('books').find({id: chapter.book_id}).value();
@@ -559,7 +559,7 @@ app.get('/', function main(request, response) {
           <p><textarea name="meaning" placeholder="meaning">${word.meaning}</textarea></p>
           <p><input type="submit" value="update"></p>
         </form>
-      `,'',''
+      `,'',control.loginUI(request, response)
     );
     response.send(html);
   })
