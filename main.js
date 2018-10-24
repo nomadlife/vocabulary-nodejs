@@ -54,7 +54,7 @@ var template = {
         <h1><a href="/">vocabulary</a></h1>
         <a href="/book/list">books</a>
         <a href="/word/all">all words</a>
-        <a href="/flash">flzsh</a>
+        <a href="/flash">flash</a>
         <br>
         ${list}
         ${body}
@@ -260,7 +260,7 @@ app.get('/', function main(request, response) {
     var html = template.HTML('', '',
       `
       <div style="color:red;"> ${feedback}</div>
-      <h2>Hello, Node.js</h2>`,
+      <h2>Hello</h2>`,
       '',
       control.loginUI(request,response)
     );
