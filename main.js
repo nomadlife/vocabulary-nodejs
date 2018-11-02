@@ -48,17 +48,33 @@ var template = {
       <head>
         <title>WEB  - ${title}</title>
         <meta charset="utf-8">
+        
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        <link rel="stylesheet" href="main.css">
       </head>
       <body>
-      ${loginUI}
-        <h1><a href="/">vocabulary</a></h1>
-        <a href="/book/list">books</a>
-        <a href="/word/all">all words</a>
-        <a href="/flash">flash</a>
-        <br>
+      <header class="site-header">
+        <nav class="navbar navbar-expand-md navbar-light bg-steel">
+          <div class="container">
+            <a class="navbar-brand mr-4" href="/">Vocabulary</a>
+            <a class="nav-item" href="/book/list">books</a>
+            <a class="nav-item" href="/word/all">all words</a>
+            <a class="nav-item" href="/flash">flash</a>
+            ${loginUI}
+          </div>
+        </nav>
+      </header>
+      
+        
+        <main class="container">
+        <div class="row">
+        <div class="col-md-7">
         ${list}
         ${body}
         ${control}
+        </div>
+        </div>
+        </main>
       </body>
       </html>
       `;
@@ -79,7 +95,7 @@ var template = {
           chapter[i] = i
         }
       });
-      var list = `<br><table cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
+      var list = `<br><table class="table">
       <tr><th>book</th><th>chapter</th><th>words</th><th>meaning</th></tr>
       <tr>`;
       filelist.forEach(function (ob, i) {
@@ -96,7 +112,7 @@ var template = {
       list = list+'</table>'; 
       return list;
     },allwordlist:function(filelist){
-      var list = `<br><table cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
+      var list = `<br><table class="table">
       <tr><th>book</th><th>chapter</th><th>words</th><th>meaning</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
@@ -111,7 +127,7 @@ var template = {
       list = list+'</table>'; 
       return list;
     },wordlist:function(filelist){
-      var list = `<br><table  cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
+      var list = `<br><table class="table">
       <tr><th>words</th><th>meaning</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
@@ -124,7 +140,7 @@ var template = {
       list = list+'</table>'; 
       return list;
     },chapterlist:function(filelist){
-      var list = `<br> <table  cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
+      var list = `<br> <table class="table">
       <tr><th>chapters</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
@@ -137,7 +153,7 @@ var template = {
       return list;
     },
     booklist:function(filelist){
-      var list = `<br><table  cellpadding="5" border='1' style="border: 1px solid black;border-collapse:collapse;">
+      var list = `<br><table class="table">
       <tr><th>title</th><th>author</th></tr>`;
       var i = 0;
       while((filelist) && i < filelist.length){
@@ -153,7 +169,7 @@ var template = {
   }
 var control = {
   loginUI:function(request, response){
-    var authStatusUI = '<a href="/login">login</a> | <a href="/register">Register</a>'
+    var authStatusUI = '<a href="/login">login</a> <a href="/register">signup</a>'
     if(request.user){
       authStatusUI = `${request.user.displayName}|<a href="/logout">logout</a>`;
     }
