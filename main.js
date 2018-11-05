@@ -48,25 +48,28 @@ var template = {
       <head>
         <title>WEB  - ${title}</title>
         <meta charset="utf-8">
-        
-        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-        <link rel="stylesheet" href="main.css">
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
+        <link rel="stylesheet" type="text/css" href="./main.css">
       </head>
       <body>
       <header class="site-header">
-        <nav class="navbar navbar-expand-md navbar-light bg-steel">
+        <nav class="navbar navbar-expand-md navbar-light bg-steelp">
           <div class="container">
+            <div class="navbar-nav mr-auto">
             <a class="navbar-brand mr-4" href="/">Vocabulary</a>
-            <a class="nav-item" href="/book/list">books</a>
-            <a class="nav-item" href="/word/all">all words</a>
-            <a class="nav-item" href="/flash">flash</a>
+            <a class="nav-item nav-link" href="/book/list">books</a>
+            <a class="nav-item nav-link" href="/word/all">all words</a>
+            <a class="nav-item nav-link" href="/flash">flash</a>
+            </div>
+            <div class="navbar-nav">
             ${loginUI}
+            </div>
           </div>
         </nav>
       </header>
       
         
-        <main class="container">
+        <main role="main" class="container">
         <div class="row">
         <div class="col-md-7">
         ${list}
@@ -169,9 +172,9 @@ var template = {
   }
 var control = {
   loginUI:function(request, response){
-    var authStatusUI = '<a href="/login">login</a> <a href="/register">signup</a>'
+    var authStatusUI = '<a class="nav-item nav-link" href="/login">login</a> <a class="nav-item nav-link" href="/register">signup</a>'
     if(request.user){
-      authStatusUI = `${request.user.displayName}|<a href="/logout">logout</a>`;
+      authStatusUI = `${request.user.displayName}|<a class="nav-item nav-link" href="/logout">logout</a>`;
     }
     return authStatusUI;
   },
